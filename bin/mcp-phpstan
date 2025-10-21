@@ -1,0 +1,46 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+// Minimal STDIO MCP server exposing PHPStan tools (no external dependencies)
+
+// Ensure errors never pollute STDOUT used for JSON-RPC messages
+ini_set('display_errors', '0');
+
+require_once dirname(__DIR__) . '/autoload.php';
+
+use Mcp\PhpstanServer\Application\Server;
+use Mcp\PhpstanServer\Application\ToolRegistry;
+use Mcp\PhpstanServer\Infrastructure\Config;
+use Mcp\PhpstanServer\Infrastructure\PhpstanConfigLocator;
+use Mcp\PhpstanServer\Infrastructure\ProcessRunner;
+use Mcp\PhpstanServer\Infrastructure\Tools\PhpstanAnalyzeTool;
+use Mcp\PhpstanServer\Infrastructure\Tools\PhpstanProTool;
+
+$stderr = fopen('php://stderr', 'w');
+
+try {
+    $config = Config::fromEnvironment(__DIR__ . '/../config', new PhpstanConfigLocator());
+    $runner = new ProcessRunner($stderr);
+
+    $registry = new ToolRegistry([
+        new PhpstanAnalyzeTool($config, $runner),
+        new PhpstanProTool($config, $runner),
+    ]);
+
+    $server = new Server($registry, $stderr);
+    $server->run();
+} catch (Throwable $e) {
+    fwrite($stderr, '[mcp-phpstan fatal] ' . $e->getMessage() . "\n");
+    // Return a single JSON-RPC error if possible (best effort)
+    $error = [
+        'jsonrpc' => '2.0',
+        'id' => null,
+        'error' => [
+            'code' => -32603,
+            'message' => 'Internal error',
+            'data' => ['message' => $e->getMessage()],
+        ],
+    ];
+    echo json_encode($error, JSON_UNESCAPED_SLASHES) . "\n";
+}
