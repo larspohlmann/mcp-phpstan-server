@@ -21,6 +21,7 @@ You can configure via environment variables or `config/config.json`:
 - `MCP_PHPSTAN_PATH` – path to `phpstan` binary (default: `vendor/bin/phpstan` then `phpstan` on PATH)
 - `MCP_PHPSTAN_CONFIG` – path to a phpstan.neon or phpstan.neon.dist (optional; autodetected upward)
 - `MCP_PHPSTAN_LEVEL` – level to pass to phpstan (e.g. `max` or `8`) if not set in config
+- `MCP_PHPSTAN_MEMORY_LIMIT` – value for PHPStan `--memory-limit` (e.g. `1G`)
 
 If no config is provided, the server searches upwards from the current working directory for one of:
 `phpstan.neon`, `phpstan.neon.dist`.

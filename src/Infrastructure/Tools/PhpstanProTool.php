@@ -37,7 +37,7 @@ final class PhpstanProTool implements ToolInterface
                 ],
                 'level' => [
                     'type' => ['string', 'integer'],
-                    'description' => 'Optional level to override configuration (e.g., "max" or 8)'
+                    'description' => 'Optional level to override configuration (e.g., "max" or 8)',
                 ],
             ],
             'required' => ['paths'],
@@ -61,13 +61,21 @@ final class PhpstanProTool implements ToolInterface
         $cmd .= ' analyse --no-progress --error-format=json';
 
         $configFile = $this->config->phpstanConfig();
+
         if ($configFile) {
             $cmd .= ' -c ' . escapeshellarg($configFile);
         }
 
         $level = $arguments['level'] ?? $this->config->phpstanLevel();
-        if (null !== $level && $level !== '') {
+
+        if (null !== $level && '' !== $level) {
             $cmd .= ' -l ' . escapeshellarg((string) $level);
+        }
+
+        $memoryLimit = $this->config->phpstanMemoryLimit();
+
+        if (null !== $memoryLimit && '' !== $memoryLimit) {
+            $cmd .= ' --memory-limit=' . escapeshellarg($memoryLimit);
         }
 
         foreach ($paths as $p) {
@@ -77,7 +85,8 @@ final class PhpstanProTool implements ToolInterface
         $result = $this->runner->run($cmd);
 
         $json = trim($result['stdout']);
-        if ($json === '') {
+
+        if ('' === $json) {
             $json = json_encode(['stderr' => $result['stderr']], JSON_UNESCAPED_SLASHES);
         }
 
@@ -88,11 +97,11 @@ final class PhpstanProTool implements ToolInterface
 
     private function normalizePath(string $path): string
     {
-        if ($path === '') {
+        if ('' === $path) {
             return $path;
         }
 
-        if ($path[0] === '.' || $path[0] === '/') {
+        if ('.' === $path[0] || '/' === $path[0]) {
             return realpath($path) ?: $path;
         }
 
