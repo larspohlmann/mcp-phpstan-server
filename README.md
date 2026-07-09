@@ -4,6 +4,7 @@
 
 ![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 Implemented in **pure PHP with zero Composer dependencies**. Drop it into any project or run it standalone — it speaks JSON-RPC 2.0 over stdio and works with Claude Desktop, Claude Code, Cursor, and any other MCP-compatible client.
 
@@ -104,3 +105,7 @@ It implements the MCP methods `initialize`, `tools/list`, and `tools/call`.
 
 - STDOUT carries **only** JSON-RPC messages; all logs go to STDERR.
 - A non-zero exit code from `phpstan` can mean findings as well as failures — the server parses the output to determine the error state.
+
+## License
+
+[MIT](LICENSE)
