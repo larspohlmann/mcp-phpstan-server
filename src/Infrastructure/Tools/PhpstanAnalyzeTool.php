@@ -37,7 +37,7 @@ final class PhpstanAnalyzeTool implements ToolInterface
                 ],
                 'level' => [
                     'type' => ['string', 'integer'],
-                    'description' => 'Optional level to override configuration (e.g., "max" or 8)'
+                    'description' => 'Optional level to override configuration (e.g., "max" or 8)',
                 ],
             ],
             'required' => ['paths'],
@@ -61,13 +61,21 @@ final class PhpstanAnalyzeTool implements ToolInterface
         $cmd .= ' analyse --no-progress --error-format=json';
 
         $configFile = $this->config->phpstanConfig();
+
         if ($configFile) {
             $cmd .= ' -c ' . escapeshellarg($configFile);
         }
 
         $level = $arguments['level'] ?? $this->config->phpstanLevel();
-        if (null !== $level && $level !== '') {
+
+        if (null !== $level && '' !== $level) {
             $cmd .= ' -l ' . escapeshellarg((string) $level);
+        }
+
+        $memoryLimit = $this->config->phpstanMemoryLimit();
+
+        if (null !== $memoryLimit && '' !== $memoryLimit) {
+            $cmd .= ' --memory-limit=' . escapeshellarg($memoryLimit);
         }
 
         foreach ($paths as $p) {
@@ -85,11 +93,11 @@ final class PhpstanAnalyzeTool implements ToolInterface
 
     private function normalizePath(string $path): string
     {
-        if ($path === '') {
+        if ('' === $path) {
             return $path;
         }
 
-        if ($path[0] === '.' || $path[0] === '/') {
+        if ('.' === $path[0] || '/' === $path[0]) {
             return realpath($path) ?: $path;
         }
 
@@ -128,10 +136,11 @@ final class PhpstanAnalyzeTool implements ToolInterface
 
         $errorsFlag = (bool) ($data['errors'] ?? false);
         $totals = $data['totals'] ?? ['file_errors' => 0, 'errors' => 0];
-        $lines[] = sprintf('PHPStan: file_errors=%d, global_errors=%d, hasErrors=%s',
+        $lines[] = sprintf(
+            'PHPStan: file_errors=%d, global_errors=%d, hasErrors=%s',
             (int) ($totals['file_errors'] ?? 0),
             (int) ($totals['errors'] ?? 0),
-            $errorsFlag ? 'yes' : 'no'
+            $errorsFlag ? 'yes' : 'no',
         );
 
         $files = $data['files'] ?? [];
@@ -151,11 +160,12 @@ final class PhpstanAnalyzeTool implements ToolInterface
                 $msg = (string) ($m['message'] ?? '');
                 $ignorable = $m['ignorable'] ?? null;
                 $identifier = (string) ($m['identifier'] ?? '');
-                $lines[] = sprintf('  L%-4d %s%s%s',
+                $lines[] = sprintf(
+                    '  L%-4d %s%s%s',
                     $line,
                     $msg,
-                    $identifier !== '' ? ' [' . $identifier . ']' : '',
-                    $ignorable ? ' (ignorable)' : ''
+                    '' !== $identifier ? ' [' . $identifier . ']' : '',
+                    $ignorable ? ' (ignorable)' : '',
                 );
             }
         }
@@ -164,10 +174,13 @@ final class PhpstanAnalyzeTool implements ToolInterface
         if (!empty($data['errors'])) {
             $lines[] = '';
             $lines[] = 'Global errors:';
+
             foreach ((array) $data['errors'] as $e) {
-                if (is_string($e)) {
-                    $lines[] = '  ' . $e;
+                if (!is_string($e)) {
+                    continue;
                 }
+
+                $lines[] = '  ' . $e;
             }
         }
 

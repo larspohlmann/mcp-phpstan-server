@@ -1,5 +1,6 @@
 {
   "phpstanPath": "/usr/local/bin/phpstan",
   "phpstanConfig": null,
-  "phpstanLevel": "max"
+  "phpstanLevel": "max",
+  "phpstanMemoryLimit": "1G"
 }
